@@ -2689,7 +2689,6 @@ static uc_err uc_restore_latest_snapshot(struct uc_struct *uc)
 {
     MemoryRegion *subregion, *subregion_next, *mr, *initial_mr;
     int level;
-    bool freed = uc->freed;
 
     QTAILQ_FOREACH_SAFE(subregion, &uc->system_memory->subregions,
                         subregions_link, subregion_next)
