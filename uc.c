@@ -2027,6 +2027,8 @@ uc_err uc_context_save(uc_engine *uc, uc_context *context)
         if (ret != UC_ERR_OK) {
             return ret;
         }
+	context->ramblock_freed = uc->ram_list.freed;
+	context->last_block = uc->ram_list.last_block;
     }
 
     context->snapshot_level = uc->snapshot_level;
@@ -2286,7 +2288,6 @@ uc_err uc_context_restore(uc_engine *uc, uc_context *context)
 {
     UC_INIT(uc);
     uc_err ret;
-    bool freed = uc->ram_list.freed;
 
     if (uc->context_content & UC_CTL_CONTEXT_MEMORY) {
         uc->snapshot_level = context->snapshot_level;
@@ -2295,7 +2296,8 @@ uc_err uc_context_restore(uc_engine *uc, uc_context *context)
             return ret;
         }
         uc_snapshot(uc);
-	uc->ram_list.freed = freed;
+	uc->ram_list.freed = context->ramblock_freed;
+	uc->ram_list.last_block = context->last_block;
     }
 
     if (uc->context_content & UC_CTL_CONTEXT_CPU) {
@@ -2687,6 +2689,7 @@ static uc_err uc_restore_latest_snapshot(struct uc_struct *uc)
 {
     MemoryRegion *subregion, *subregion_next, *mr, *initial_mr;
     int level;
+    bool freed = uc->freed;
 
     QTAILQ_FOREACH_SAFE(subregion, &uc->system_memory->subregions,
                         subregions_link, subregion_next)
@@ -2723,6 +2726,7 @@ static uc_err uc_restore_latest_snapshot(struct uc_struct *uc)
         g_array_remove_range(uc->unmapped_regions, i, 1);
     }
     uc->snapshot_level--;
+
     return UC_ERR_OK;
 }
 
