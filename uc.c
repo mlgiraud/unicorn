@@ -2286,6 +2286,7 @@ uc_err uc_context_restore(uc_engine *uc, uc_context *context)
 {
     UC_INIT(uc);
     uc_err ret;
+    bool freed = uc->ram_list.freed;
 
     if (uc->context_content & UC_CTL_CONTEXT_MEMORY) {
         uc->snapshot_level = context->snapshot_level;
@@ -2294,6 +2295,7 @@ uc_err uc_context_restore(uc_engine *uc, uc_context *context)
             return ret;
         }
         uc_snapshot(uc);
+	uc->ram_list.freed = freed;
     }
 
     if (uc->context_content & UC_CTL_CONTEXT_CPU) {
