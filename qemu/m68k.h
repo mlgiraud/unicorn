@@ -54,6 +54,7 @@
 #define vm_start vm_start_m68k
 #define address_space_dispatch_compact address_space_dispatch_compact_m68k
 #define flatview_translate flatview_translate_m68k
+#define flatview_update_memory_region flatview_update_memory_region_m68k
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_m68k
 #define qemu_get_cpu qemu_get_cpu_m68k
 #define cpu_address_space_init cpu_address_space_init_m68k

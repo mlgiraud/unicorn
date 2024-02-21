@@ -54,6 +54,7 @@ resume_all_vcpus \
 vm_start \
 address_space_dispatch_compact \
 flatview_translate \
+flatview_update_memory_region \
 address_space_translate_for_iotlb \
 qemu_get_cpu \
 cpu_address_space_init \

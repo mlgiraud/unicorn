@@ -54,6 +54,7 @@
 #define vm_start vm_start_mips
 #define address_space_dispatch_compact address_space_dispatch_compact_mips
 #define flatview_translate flatview_translate_mips
+#define flatview_update_memory_region flatview_update_memory_region_mips
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_mips
 #define qemu_get_cpu qemu_get_cpu_mips
 #define cpu_address_space_init cpu_address_space_init_mips

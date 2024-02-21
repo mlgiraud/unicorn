@@ -54,6 +54,7 @@
 #define vm_start vm_start_s390x
 #define address_space_dispatch_compact address_space_dispatch_compact_s390x
 #define flatview_translate flatview_translate_s390x
+#define flatview_update_memory_region flatview_update_memory_region_s390x
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_s390x
 #define qemu_get_cpu qemu_get_cpu_s390x
 #define cpu_address_space_init cpu_address_space_init_s390x

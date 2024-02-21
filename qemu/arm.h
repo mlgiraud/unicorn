@@ -54,6 +54,7 @@
 #define vm_start vm_start_arm
 #define address_space_dispatch_compact address_space_dispatch_compact_arm
 #define flatview_translate flatview_translate_arm
+#define flatview_update_memory_region flatview_update_memory_region_arm
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_arm
 #define qemu_get_cpu qemu_get_cpu_arm
 #define cpu_address_space_init cpu_address_space_init_arm

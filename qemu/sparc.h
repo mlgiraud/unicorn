@@ -54,6 +54,7 @@
 #define vm_start vm_start_sparc
 #define address_space_dispatch_compact address_space_dispatch_compact_sparc
 #define flatview_translate flatview_translate_sparc
+#define flatview_update_memory_region flatview_update_memory_region_sparc
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_sparc
 #define qemu_get_cpu qemu_get_cpu_sparc
 #define cpu_address_space_init cpu_address_space_init_sparc

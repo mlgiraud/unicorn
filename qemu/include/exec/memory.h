@@ -1062,6 +1062,8 @@ MemoryRegion *flatview_translate(struct uc_struct *uc, FlatView *fv,
                                  hwaddr *len, bool is_write,
                                  MemTxAttrs attrs);
 
+bool flatview_update_memory_region(AddressSpace *as, MemoryRegion *mr);
+
 static inline MemoryRegion *address_space_translate(AddressSpace *as,
                                                     hwaddr addr, hwaddr *xlat,
                                                     hwaddr *len, bool is_write,

@@ -54,6 +54,7 @@
 #define vm_start vm_start_tricore
 #define address_space_dispatch_compact address_space_dispatch_compact_tricore
 #define flatview_translate flatview_translate_tricore
+#define flatview_update_memory_region flatview_update_memory_region_tricore
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_tricore
 #define qemu_get_cpu qemu_get_cpu_tricore
 #define cpu_address_space_init cpu_address_space_init_tricore

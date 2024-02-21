@@ -982,6 +982,13 @@ void memory_region_transaction_commit(MemoryRegion *mr)
 {
     AddressSpace *as;
 
+    if (mr->uc->memory_region_update_pending && mr->priority && !mr->is_iommu) {
+        if (flatview_update_memory_region(&mr->uc->address_space_memory, mr)) {
+            mr->uc->memory_region_update_pending = false;
+            return;
+        }
+    }
+
     if (mr->uc->memory_region_update_pending) {
         flatviews_reset(mr->uc);
 

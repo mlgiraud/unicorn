@@ -278,6 +278,7 @@ static MemoryRegionSection *phys_page_find(AddressSpaceDispatch *d, hwaddr addr)
     }
 }
 
+
 /* Called from RCU critical section */
 static MemoryRegionSection *address_space_lookup_region(AddressSpaceDispatch *d,
                                                         hwaddr addr,
@@ -301,6 +302,34 @@ static MemoryRegionSection *address_space_lookup_region(AddressSpaceDispatch *d,
     return section;
 }
 
+bool flatview_update_memory_region(AddressSpace *as, MemoryRegion *mr)
+{
+    AddressSpaceDispatch *d;
+    MemoryRegionSection *s;
+    MemoryRegion *tmpmr = mr->container;
+    hwaddr addr = mr->addr;
+
+    if (mr->subpage || !mr->container) {
+        return false;
+    }
+
+    while (tmpmr) {
+        addr += tmpmr->addr;
+        tmpmr = tmpmr->container;
+    }
+
+    d = address_space_to_dispatch(as);
+    s = address_space_lookup_region(d, addr, true);
+    if (!s || s->mr->perms != mr->perms || s->mr->priority >= mr->priority) {
+	return false;
+    }
+
+    if (s->offset_within_region == 0 && s->size == mr->size) {
+        s->mr = mr;
+        return true;
+    }
+    return false;
+}
 /* Called from RCU critical section */
 static MemoryRegionSection *
 address_space_translate_internal(AddressSpaceDispatch *d, hwaddr addr, hwaddr *xlat,

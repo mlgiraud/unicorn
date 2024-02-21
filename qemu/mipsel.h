@@ -54,6 +54,7 @@
 #define vm_start vm_start_mipsel
 #define address_space_dispatch_compact address_space_dispatch_compact_mipsel
 #define flatview_translate flatview_translate_mipsel
+#define flatview_update_memory_region flatview_update_memory_region_mipsel
 #define address_space_translate_for_iotlb address_space_translate_for_iotlb_mipsel
 #define qemu_get_cpu qemu_get_cpu_mipsel
 #define cpu_address_space_init cpu_address_space_init_mipsel
