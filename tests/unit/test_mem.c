@@ -563,6 +563,45 @@ static bool test_virtual_write_tlb_fill(uc_engine *uc, uint64_t addr, uc_mem_typ
     return true;
 }
 
+static bool test_mips_delay_slot_tlb_fill(uc_engine *uc, uint64_t addr,
+                                          uc_mem_type type,
+                                          uc_tlb_entry *result,
+                                          void *user_data)
+{
+    result->paddr = addr;
+    result->perms = UC_PROT_ALL;
+    return true;
+}
+
+static void test_mips_delay_slot_tlb_state(void)
+{
+    uc_engine *uc;
+    uc_hook hook;
+    uint32_t code_address = 0x1000;
+    uint32_t data_address = 0x50000000;
+    char code[] = {
+        0x00, 0x00, 0x01, 0x24, // addiu $1, $zero, 0
+        0x05, 0x00, 0x20, 0x14, // bnez $1, target
+        0x00, 0x00, 0x80, 0xa0, // sb $zero, 0($a0)
+        0x07, 0x04, 0x00, 0x08, // j end
+        0x00, 0x00, 0x00, 0x00, // nop
+        0x00, 0x00, 0x00, 0x00, // nop
+        0x00, 0x00, 0x00, 0x00, // nop
+    };
+
+    OK(uc_open(UC_ARCH_MIPS, UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN, &uc));
+    OK(uc_mem_map(uc, code_address, 0x1000, UC_PROT_ALL));
+    OK(uc_mem_write(uc, code_address, code, sizeof(code)));
+    OK(uc_mem_map(uc, data_address, 0x1000, UC_PROT_ALL));
+    OK(uc_reg_write(uc, UC_MIPS_REG_A0, &data_address));
+    OK(uc_ctl_tlb_mode(uc, UC_TLB_VIRTUAL));
+    OK(uc_hook_add(uc, &hook, UC_HOOK_TLB_FILL,
+                   test_mips_delay_slot_tlb_fill, NULL, 1, 0));
+
+    OK(uc_emu_start(uc, code_address, code_address + sizeof(code), 0, 0));
+    OK(uc_close(uc));
+}
+
 static void test_virtual_write(void)
 {
     uc_engine *uc;
@@ -700,6 +739,8 @@ TEST_LIST = {{"test_map_correct", test_map_correct},
               test_mem_read_and_write_large_memory_block},
              {"test_virtual_to_physical", test_virtual_to_physical},
              {"test_virtual_write", test_virtual_write},
+             {"test_mips_delay_slot_tlb_state",
+              test_mips_delay_slot_tlb_state},
              {"test_mem_addr_size_wraparound", test_mem_addr_size_wraparound},
              {"test_smc", test_smc},
              {"test_tlbdirty_exec", test_tlbdirty_exec},

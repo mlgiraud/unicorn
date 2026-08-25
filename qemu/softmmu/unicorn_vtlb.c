@@ -67,6 +67,11 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
     struct hook *hook;
     HOOK_FOREACH_VAR_DECLARE;
 
+#if defined(TARGET_MIPS) || defined(TARGET_MIPS64)
+    CPUMIPSState *mips_env = cs->env_ptr;
+    uint32_t mips_branch_hflags = mips_env->hflags & MIPS_HFLAG_BMASK;
+    target_ulong mips_btarget = mips_env->btarget;
+#endif
     cpu_restore_state(cs, retaddr, false);
 
     HOOK_FOREACH(uc, hook, UC_HOOK_TLB_FILL) {
@@ -121,6 +126,11 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
     }
 
     if (ret) {
+#if defined(TARGET_MIPS) || defined(TARGET_MIPS64)
+        mips_env->hflags = (mips_env->hflags & ~MIPS_HFLAG_BMASK) |
+                          mips_branch_hflags;
+        mips_env->btarget = mips_btarget;
+#endif
         tlb_set_page(cs, address & TARGET_PAGE_MASK, e.paddr & TARGET_PAGE_MASK, perms_to_prot(e.perms), mmu_idx, TARGET_PAGE_SIZE);
         return true;
     }
