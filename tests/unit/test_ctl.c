@@ -456,6 +456,22 @@ static void test_add_block_icount_hook(void)
     OK(uc_close(uc));
 }
 
+#ifdef UNICORN_HAS_MIPS
+static void test_mips_tb_temp_capacity(void)
+{
+    uc_engine *uc;
+    uc_tb tb;
+    char code[16];
+
+    memset(code, 0x90, sizeof(code));
+    uc_common_setup(&uc, UC_ARCH_MIPS,
+                    UC_MODE_MIPS32 | UC_MODE_LITTLE_ENDIAN, code,
+                    sizeof(code));
+    OK(uc_ctl_request_cache(uc, code_start, &tb));
+    OK(uc_close(uc));
+}
+#endif
+
 TEST_LIST = {
     {"test_uc_ctl_mode", test_uc_ctl_mode},
     {"test_uc_ctl_page_size", test_uc_ctl_page_size},
@@ -476,4 +492,7 @@ TEST_LIST = {
     {"test_noexec", test_noexec},
     {"test_add_block_hook", test_add_block_hook},
     {"test_add_block_icount_hook", test_add_block_icount_hook},
+#ifdef UNICORN_HAS_MIPS
+    {"test_mips_tb_temp_capacity", test_mips_tb_temp_capacity},
+#endif
     {NULL, NULL}};
