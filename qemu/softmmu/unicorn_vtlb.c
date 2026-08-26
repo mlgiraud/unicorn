@@ -65,12 +65,26 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
     struct uc_struct *uc = cs->uc;
     uc_tlb_entry e;
     struct hook *hook;
+    bool sync_state = !uc->tlb_fill_fast;
     HOOK_FOREACH_VAR_DECLARE;
 
-    /* A successful TLB-fill hook only reads the fault address. Restoring CPU
-     * state here decodes the current TB on every fill and can clobber live
-     * state, including MIPS delay-slot state. A failed fill restores state in
-     * raise_mmu_exception before it exits the CPU loop. */
+#if defined(TARGET_MIPS) || defined(TARGET_MIPS64)
+    CPUMIPSState *mips_env = cs->env_ptr;
+    uint32_t mips_branch_hflags;
+    target_ulong mips_btarget;
+#endif
+
+    /* Standard hooks expose synchronized register state to callbacks. Fast
+     * mode opts out of that work, so callbacks must not read registers.
+     * Failed fills restore state in raise_mmu_exception before they exit the
+     * CPU loop. */
+    if (sync_state) {
+#if defined(TARGET_MIPS) || defined(TARGET_MIPS64)
+        mips_branch_hflags = mips_env->hflags & MIPS_HFLAG_BMASK;
+        mips_btarget = mips_env->btarget;
+#endif
+        cpu_restore_state(cs, retaddr, false);
+    }
 
     HOOK_FOREACH(uc, hook, UC_HOOK_TLB_FILL) {
         if (hook->to_delete) {
@@ -124,6 +138,13 @@ bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
     }
 
     if (ret) {
+#if defined(TARGET_MIPS) || defined(TARGET_MIPS64)
+        if (sync_state) {
+            mips_env->hflags = (mips_env->hflags & ~MIPS_HFLAG_BMASK) |
+                              mips_branch_hflags;
+            mips_env->btarget = mips_btarget;
+        }
+#endif
         tlb_set_page(cs, address & TARGET_PAGE_MASK, e.paddr & TARGET_PAGE_MASK, perms_to_prot(e.perms), mmu_idx, TARGET_PAGE_SIZE);
         return true;
     }

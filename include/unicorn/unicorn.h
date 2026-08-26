@@ -662,6 +662,10 @@ typedef enum uc_control_type {
     // compiled out (where preallocation cannot be disabled).
     // Write: @args = (int)
     UC_CTL_UC_PREALLOC,
+    // Skip CPU-state synchronization before virtual TLB-fill callbacks.
+    // This reduces TLB-fill overhead, but callbacks must not read registers.
+    // Write: @args = (int)
+    UC_CTL_TLB_FILL_FAST,
 } uc_control_type;
 
 /*
@@ -739,6 +743,8 @@ See sample_ctl.c for a detailed example.
 #define uc_ctl_flush_tlb(uc) uc_ctl(uc, UC_CTL_WRITE(UC_CTL_TLB_FLUSH, 0))
 #define uc_ctl_tlb_mode(uc, mode)                                              \
     uc_ctl(uc, UC_CTL_WRITE(UC_CTL_TLB_TYPE, 1), (mode))
+#define uc_ctl_set_tlb_fill_fast(uc, enabled)                                 \
+    uc_ctl(uc, UC_CTL_WRITE(UC_CTL_TLB_FILL_FAST, 1), (enabled))
 #define uc_ctl_get_tcg_buffer_size(uc, size)                                   \
     uc_ctl(uc, UC_CTL_READ(UC_CTL_TCG_BUFFER_SIZE, 1), (size))
 #define uc_ctl_set_tcg_buffer_size(uc, size)                                   \

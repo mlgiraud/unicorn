@@ -1975,6 +1975,47 @@ static void test_x86_vtlb(void)
     OK(uc_close(uc));
 }
 
+typedef struct TlbFillState {
+    bool saw_read;
+    uint32_t read_pc;
+} TlbFillState;
+
+static bool test_x86_vtlb_pc_callback(uc_engine *uc, uint64_t addr,
+                                      uc_mem_type type, uc_tlb_entry *result,
+                                      void *user_data)
+{
+    TlbFillState *state = user_data;
+    if (type == UC_MEM_READ) {
+        state->saw_read = true;
+        OK(uc_reg_read(uc, UC_X86_REG_EIP, &state->read_pc));
+    }
+    result->paddr = addr;
+    result->perms = UC_PROT_ALL;
+    return true;
+}
+
+static void test_x86_vtlb_callback_sees_current_pc(void)
+{
+    uc_engine *uc;
+    uc_hook hook;
+    // nop; mov eax, dword ptr [0x3000]
+    char code[] = "\x90\xa1\x00\x30\x00\x00";
+    TlbFillState state = {0};
+
+    uc_common_setup(&uc, UC_ARCH_X86, UC_MODE_32, code, sizeof(code) - 1);
+
+    OK(uc_ctl_tlb_mode(uc, UC_TLB_VIRTUAL));
+    OK(uc_hook_add(uc, &hook, UC_HOOK_TLB_FILL,
+                   test_x86_vtlb_pc_callback, &state, 1, 0));
+
+    OK(uc_emu_start(uc, code_start, code_start + sizeof(code) - 1, 0, 0));
+
+    TEST_CHECK(state.saw_read);
+    TEST_CHECK(state.read_pc == code_start + 1);
+
+    OK(uc_close(uc));
+}
+
 static void test_x86_segmentation(void)
 {
     uc_engine *uc;
@@ -2791,6 +2832,8 @@ TEST_LIST = {
     {"test_x86_mmu", test_x86_mmu},
     {"test_x86_read_virtual", test_x86_read_virtual},
     {"test_x86_vtlb", test_x86_vtlb},
+    {"test_x86_vtlb_callback_sees_current_pc",
+     test_x86_vtlb_callback_sees_current_pc},
     {"test_x86_segmentation", test_x86_segmentation},
     {"test_x86_0xff_lcall", test_x86_0xff_lcall},
     {"test_x86_64_not_overwriting_tmp0_for_pc_update",

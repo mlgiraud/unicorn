@@ -366,6 +366,7 @@ struct uc_struct {
     bool memory_region_update_pending;
 
     uc_set_tlb_t set_tlb;
+    bool tlb_fill_fast;
 
     // linked lists containing hooks per type
     struct list hook[UC_HOOK_MAX];

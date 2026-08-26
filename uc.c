@@ -3154,6 +3154,14 @@ uc_err uc_ctl(uc_engine *uc, uc_control_type control, ...)
         break;
     }
 
+    case UC_CTL_TLB_FILL_FAST:
+        if (rw == UC_CTL_IO_WRITE) {
+            uc->tlb_fill_fast = (bool)va_arg(args, int);
+        } else {
+            err = UC_ERR_ARG;
+        }
+        break;
+
     default:
         err = UC_ERR_ARG;
         break;
