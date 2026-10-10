@@ -452,22 +452,57 @@ static void test_add_block_icount_hook(void)
     OK(uc_hook_add(uc, &block_hook, UC_HOOK_BLOCK_ICOUNT, &test_add_block_icount_hook_block_cb, &icount, code_start, code_start+0x1000));
     OK(uc_emu_start(uc, code_start, 0, 0, 0));
     TEST_CHECK(icount == 2);
-    TEST_CHECK(uc_hook_add(uc, &block_hook, UC_HOOK_BLOCK, &test_add_block_icount_hook_block_cb, &icount, 0, code_start+0x1000) == UC_ERR_HOOK_EXIST);
-    TEST_CHECK(uc_hook_add(uc, &block_hook, UC_HOOK_BLOCK,
-                           &test_add_block_icount_hook_block_cb, &icount,
-                           code_start + 0x1000,
-                           code_start + 0x2000) == UC_ERR_HOOK_EXIST);
     TEST_CHECK(uc_hook_add(uc, &block_hook,
                            UC_HOOK_BLOCK | UC_HOOK_BLOCK_ICOUNT,
                            &test_add_block_icount_hook_block_cb, &icount,
                            code_start, code_start) == UC_ERR_HOOK);
-    OK(uc_hook_del(uc, block_hook));
-    OK(uc_hook_add(uc, &block_hook, UC_HOOK_BLOCK_ICOUNT,
-                   &test_add_block_icount_hook_block_cb, &icount, code_start,
-                   code_start));
-    TEST_CHECK(uc_hook_add(uc, &block_hook, UC_HOOK_BLOCK,
-                           &test_add_block_icount_hook_block_cb, &icount,
-                           code_start, code_start) == UC_ERR_HOOK_EXIST);
+    OK(uc_close(uc));
+}
+
+static void test_block_and_block_icount_hooks_size_cb(uc_engine *uc,
+                                                      uint64_t address,
+                                                      uint32_t size,
+                                                      void *user_data)
+{
+    uint32_t *block_size = user_data;
+    *block_size = size;
+}
+
+static void test_block_and_block_icount_hooks_icount_cb(uc_engine *uc,
+                                                        uint64_t address,
+                                                        uint32_t size,
+                                                        void *user_data)
+{
+    uint32_t *icount = user_data;
+    *icount = size;
+}
+
+static void test_block_and_block_icount_hooks(void)
+{
+    uc_engine *uc;
+    uint32_t block_size = 0;
+    uint32_t icount = 0;
+    uc_hook syscall_hook;
+    uc_hook size_hook;
+    uc_hook icount_hook;
+    /* xor rax, rax
+     * syscall
+     */
+    char code[] = "\x48\x31\xc0\x0f\x05";
+
+    uc_common_setup(&uc, UC_ARCH_X86, UC_MODE_64, code, sizeof(code) - 1);
+    OK(uc_hook_add(uc, &syscall_hook, UC_HOOK_INSN,
+                   &test_add_block_hook_syscall_cb, NULL, 1, 0,
+                   UC_X86_INS_SYSCALL));
+    OK(uc_hook_add(uc, &icount_hook, UC_HOOK_BLOCK_ICOUNT,
+                   &test_block_and_block_icount_hooks_icount_cb, &icount,
+                   code_start, code_start));
+    OK(uc_hook_add(uc, &size_hook, UC_HOOK_BLOCK,
+                   &test_block_and_block_icount_hooks_size_cb, &block_size,
+                   code_start, code_start));
+    OK(uc_emu_start(uc, code_start, 0, 0, 0));
+    TEST_CHECK(block_size == 5);
+    TEST_CHECK(icount == 2);
     OK(uc_close(uc));
 }
 
@@ -507,6 +542,7 @@ TEST_LIST = {
     {"test_noexec", test_noexec},
     {"test_add_block_hook", test_add_block_hook},
     {"test_add_block_icount_hook", test_add_block_icount_hook},
+    {"test_block_and_block_icount_hooks", test_block_and_block_icount_hooks},
 #ifdef UNICORN_HAS_MIPS
     {"test_mips_tb_temp_capacity", test_mips_tb_temp_capacity},
 #endif
