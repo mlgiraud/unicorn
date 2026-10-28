@@ -82,8 +82,10 @@ typedef uint64_t target_ulong;
 #define CPU_TLB_ENTRY_BITS 6
 #endif
 
-#define CPU_TLB_DYN_MIN_BITS 6
-#define CPU_TLB_DYN_DEFAULT_BITS 8
+/* Keep long-running workloads above the small-table refill regime between
+ * flushes, where dynamic resizing cannot grow the table. */
+#define CPU_TLB_DYN_MIN_BITS 12
+#define CPU_TLB_DYN_DEFAULT_BITS 12
 
 # if HOST_LONG_BITS == 32
 /* Make sure we do not require a double-word shift for the TLB load */
