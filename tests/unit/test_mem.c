@@ -413,6 +413,68 @@ static void test_context_snapshot(void)
     OK(uc_close(uc));
 }
 
+static void test_snapshot_restore_after_map_and_cow(void)
+{
+    uc_engine *uc;
+    uc_context *ctx;
+    uint64_t value = 1;
+
+    OK(uc_open(UC_ARCH_X86, UC_MODE_64, &uc));
+    OK(uc_ctl_context_mode(uc, UC_CTL_CONTEXT_MEMORY));
+    OK(uc_mem_map(uc, 0x1000, 0x1000, UC_PROT_ALL));
+    OK(uc_context_alloc(uc, &ctx));
+    OK(uc_context_save(uc, ctx));
+
+    OK(uc_mem_map(uc, 0x3000, 0x1000, UC_PROT_ALL));
+    OK(uc_mem_write(uc, 0x1000, &value, sizeof(value)));
+    OK(uc_context_restore(uc, ctx));
+    uc_assert_err(UC_ERR_READ_UNMAPPED,
+                  uc_mem_read(uc, 0x3000, &value, sizeof(value)));
+
+    value = 2;
+    OK(uc_mem_write(uc, 0x1000, &value, sizeof(value)));
+    value = 0;
+    OK(uc_mem_read(uc, 0x1000, &value, sizeof(value)));
+    TEST_CHECK(value == 2);
+
+    OK(uc_context_restore(uc, ctx));
+    OK(uc_mem_read(uc, 0x1000, &value, sizeof(value)));
+    TEST_CHECK(value == 0);
+
+    OK(uc_context_free(ctx));
+    OK(uc_close(uc));
+}
+
+static void test_snapshot_restore_map_conflict(void)
+{
+    uc_engine *uc;
+    uc_context *ctx;
+    uint8_t *backing = calloc(1, 0x1000);
+    uint64_t value = 1;
+
+    memset(backing, 2, 0x1000);
+    OK(uc_open(UC_ARCH_X86, UC_MODE_64, &uc));
+    OK(uc_ctl_context_mode(uc, UC_CTL_CONTEXT_MEMORY));
+    OK(uc_mem_map(uc, 0x1000, 0x1000, UC_PROT_ALL));
+    OK(uc_mem_write(uc, 0x1000, &value, sizeof(value)));
+    OK(uc_context_alloc(uc, &ctx));
+    OK(uc_context_save(uc, ctx));
+
+    OK(uc_mem_unmap(uc, 0x1000, 0x1000));
+    OK(uc_mem_map_ptr(uc, 0x1000, 0x1000, UC_PROT_ALL, backing));
+    OK(uc_mem_map(uc, 0x3000, 0x1000, UC_PROT_ALL));
+    uc_assert_err(UC_ERR_MAP, uc_context_restore(uc, ctx));
+
+    OK(uc_mem_read(uc, 0x1000, &value, sizeof(value)));
+    TEST_CHECK(value == 0x0202020202020202);
+    value = 3;
+    OK(uc_mem_write(uc, 0x1000, &value, sizeof(value)));
+
+    OK(uc_context_free(ctx));
+    OK(uc_close(uc));
+    free(backing);
+}
+
 static void test_snapshot_unmap(void)
 {
     uc_engine *uc;
@@ -734,6 +796,10 @@ TEST_LIST = {{"test_map_correct", test_map_correct},
              {"test_snapshot", test_snapshot},
              {"test_snapshot_with_vtlb", test_snapshot_with_vtlb},
              {"test_context_snapshot", test_context_snapshot},
+             {"test_snapshot_restore_after_map_and_cow",
+              test_snapshot_restore_after_map_and_cow},
+             {"test_snapshot_restore_map_conflict",
+              test_snapshot_restore_map_conflict},
              {"test_snapshot_unmap", test_snapshot_unmap},
              {"test_mem_read_and_write_large_memory_block",
               test_mem_read_and_write_large_memory_block},

@@ -27,7 +27,7 @@
 //#define DEBUG_UNASSIGNED
 
 void memory_region_transaction_begin(void);
-static void memory_region_transaction_commit(MemoryRegion *mr);
+void memory_region_transaction_commit(MemoryRegion *mr);
 static void memory_region_destructor_container(MemoryRegion *mr);
 
 typedef struct AddrRange AddrRange;
@@ -1061,10 +1061,14 @@ void memory_region_transaction_begin(void)
 {
 }
 
-static void memory_region_transaction_commit(MemoryRegion *mr)
+void memory_region_transaction_commit(MemoryRegion *mr)
 {
     AddressSpace *as = memory_region_to_address_space(mr);
     FlatView *fv = NULL;
+
+    if (mr->uc->snapshot_restore_in_progress) {
+        return;
+    }
     if (as)
         fv = address_space_to_flatview(as);
 

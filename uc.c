@@ -2625,11 +2625,16 @@ uc_err uc_context_restore(uc_engine *uc, uc_context *context)
                                context->fv, true)) {
             return UC_ERR_NOMEM;
         }
+        uc->snapshot_restore_in_progress = true;
         ret = uc_restore_latest_snapshot(uc);
+        uc->snapshot_restore_in_progress = false;
         if (ret != UC_ERR_OK) {
+            uc->memory_commit(uc->system_memory);
             restore_jit_state(uc);
             return ret;
         }
+        // The restored context's FlatView includes the complete topology update.
+        uc->memory_region_update_pending = false;
         uc_snapshot(uc);
         uc->ram_list.freed = context->ramblock_freed;
         uc->ram_list.last_block = context->last_block;

@@ -114,6 +114,8 @@ typedef MemoryRegion *(*uc_memory_mapping_t)(struct uc_struct *, hwaddr addr);
 
 typedef void (*uc_memory_filter_t)(MemoryRegion *, int32_t);
 
+typedef void (*uc_memory_commit_t)(MemoryRegion *);
+
 typedef bool (*uc_flatview_copy_t)(struct uc_struct *, FlatView *, FlatView *,
                                    bool);
 
@@ -305,6 +307,7 @@ struct uc_struct {
     uc_args_uc_ram_size_ptr_t memory_map_ptr;
     uc_memory_mapping_t memory_mapping;
     uc_memory_filter_t memory_filter_subregions;
+    uc_memory_commit_t memory_commit;
     uc_flatview_copy_t flatview_copy;
     uc_mem_unmap_t memory_unmap;
     uc_mem_unmap_t memory_moveout;
@@ -364,6 +367,7 @@ struct uc_struct {
     QTAILQ_HEAD(, AddressSpace) address_spaces;
     GHashTable *flat_views;
     bool memory_region_update_pending;
+    bool snapshot_restore_in_progress;
 
     uc_set_tlb_t set_tlb;
     bool tlb_fill_fast;

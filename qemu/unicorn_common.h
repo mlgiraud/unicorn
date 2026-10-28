@@ -15,6 +15,7 @@ void tcg_exec_init(struct uc_struct *uc, uint32_t tb_size);
 bool unicorn_fill_tlb(CPUState *cs, vaddr address, int size,
                       MMUAccessType rw, int mmu_idx,
                       bool probe, uintptr_t retaddr);
+void memory_region_transaction_commit(MemoryRegion *mr);
 
 // return true on success, false on failure
 static inline bool cpu_physical_mem_read(AddressSpace *as, hwaddr addr,
@@ -207,6 +208,7 @@ static inline void uc_common_init(struct uc_struct* uc)
     uc->set_tlb = uc_set_tlb;
     uc->memory_mapping = find_memory_mapping;
     uc->memory_filter_subregions = memory_region_filter_subregions;
+    uc->memory_commit = memory_region_transaction_commit;
     uc->flatview_copy = flatview_copy;
     uc->memory_cow = memory_cow;
 
