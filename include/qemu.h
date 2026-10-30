@@ -44,6 +44,8 @@ typedef struct RAMList {
     bool freed;
     RAMBlock *mru_block;
     RAMBlock *last_block;
+    // End of the RAM block with the last offset, used while no block was freed
+    ram_addr_t end_offset;
     QLIST_HEAD(, RAMBlock) blocks;
 } RAMList;
 

@@ -2354,6 +2354,7 @@ uc_err uc_context_save(uc_engine *uc, uc_context *context)
         }
         context->ramblock_freed = uc->ram_list.freed;
         context->last_block = uc->ram_list.last_block;
+        context->ram_end_offset = uc->ram_list.end_offset;
         uc->tcg_flush_tlb(uc);
     }
 
@@ -2638,6 +2639,7 @@ uc_err uc_context_restore(uc_engine *uc, uc_context *context)
         uc_snapshot(uc);
         uc->ram_list.freed = context->ramblock_freed;
         uc->ram_list.last_block = context->last_block;
+        uc->ram_list.end_offset = context->ram_end_offset;
         uc->tcg_flush_tlb(uc);
     }
 

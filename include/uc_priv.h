@@ -462,6 +462,7 @@ struct uc_context {
     int snapshot_level;   // the memory snapshot level to restore
     bool ramblock_freed;  // wheter there was a some ramblock freed
     RAMBlock *last_block; // The last element of the ramblock list
+    ram_addr_t ram_end_offset; // The end of the ramblock with the last offset
     FlatView *fv;         // The current flatview of the memory
     char data[0];         // context
 };

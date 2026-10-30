@@ -957,10 +957,10 @@ void flatview_add_to_dispatch(struct uc_struct *uc, FlatView *fv, MemoryRegionSe
 
 static ram_addr_t find_ram_offset_last(struct uc_struct *uc, ram_addr_t size)
 {
-    ram_addr_t result = 0;
-    RAMBlock *block = uc->ram_list.last_block;
-
-    result = block->offset + block->max_length;
+    /* The list tail is not the block with the last offset after a larger
+     * block went before the tail, so use the recorded end offset instead.
+     */
+    ram_addr_t result = uc->ram_list.end_offset;
 
     if (result + size > RAM_ADDR_MAX) {
         abort();
@@ -1055,6 +1055,8 @@ static void ram_block_add(struct uc_struct *uc, RAMBlock *new_block)
     RAMBlock *last_block = NULL;
 
     new_block->offset = find_ram_offset(uc, new_block->max_length);
+    uc->ram_list.end_offset = MAX(uc->ram_list.end_offset,
+                                  new_block->offset + new_block->max_length);
 
     if (!new_block->host) {
         new_block->host = phys_mem_alloc(uc, new_block->max_length,
